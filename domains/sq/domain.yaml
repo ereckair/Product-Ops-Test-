@@ -1,0 +1,15 @@
+domain: sq
+name: Sourcing & Quality
+value_stream: make
+product_leader: <name>
+tdd_mode: co-draft          # co-draft | eng-owned
+jira:
+  project_key: SQ           # change to your sandbox project key
+  issue_types:
+    initiative: null        # e.g. "Initiative" if your Jira has it; null = skip
+    epic: Epic
+    story: Story
+    task: Subtask           # "Sub-task" in company-managed projects
+  story_points_field: customfield_10016   # find yours via GET /rest/api/2/field
+  epic_link_mode: parent    # parent (Cloud) | epic_link (older Data Center)
+  epic_link_field: null     # e.g. customfield_10014 when epic_link_mode = epic_link

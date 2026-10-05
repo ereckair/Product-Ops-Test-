@@ -1,0 +1,13 @@
+# Story point rubric. Each factor is scored 0-3 in TDD §6.1. Total maps to points.
+# Calibrate against 10-15 completed stories before org rollout.
+version: 0.1
+factors: [complexity, uncertainty, integrations, data_migration, security_impact]
+max_per_factor: 3
+thresholds:          # inclusive upper bound of total -> points
+  - {max: 1,  points: 1}
+  - {max: 3,  points: 2}
+  - {max: 5,  points: 3}
+  - {max: 7,  points: 5}
+  - {max: 10, points: 8}
+  - {max: 13, points: 13}
+split_above: 13      # totals above this must be split into smaller stories

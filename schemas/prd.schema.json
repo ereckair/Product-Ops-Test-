@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRD frontmatter",
+  "type": "object",
+  "required": ["id", "title", "version", "status", "domain", "value_stream", "product_owner", "product_leader", "kpis"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^PRD-[A-Z]+-[0-9]{3}$"},
+    "title": {"type": "string", "minLength": 3},
+    "version": {"type": ["string", "number"]},
+    "status": {"enum": ["draft", "in-review", "approved", "superseded"]},
+    "domain": {"type": "string"},
+    "value_stream": {"enum": ["design", "plan", "make", "enable"]},
+    "product_owner": {"type": "string"},
+    "product_leader": {"type": "string"},
+    "origin": {
+      "type": ["object", "null"],
+      "properties": {
+        "jpd_idea": {"type": ["string", "null"]},
+        "sources": {"type": ["array", "null"], "items": {"type": "string"}}
+      }
+    },
+    "jira": {"type": ["object", "null"], "properties": {"initiative": {"type": ["string", "null"]}}},
+    "kpis": {
+      "type": "array",
+      "items": {"enum": ["otif", "order_to_delivery_lead_time", "cost_per_unit_delivered", "cash_conversion_cycle",
+        "contacts_per_delivered_unit", "brand_health", "vitality", "workforce_stability", "growth_to_plan", "margin_to_plan"]}
+    },
+    "approved_by": {"type": ["array", "null"], "items": {"type": "string"}},
+    "approved_on": {"type": ["string", "null"]}
+  }
+}

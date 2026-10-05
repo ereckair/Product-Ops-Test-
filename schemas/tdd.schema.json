@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TDD frontmatter",
+  "type": "object",
+  "required": ["id", "prd", "title", "version", "status", "tdd_mode", "engineering_lead", "golden_path"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^TDD-[A-Z]+-[0-9]{3}$"},
+    "prd": {"type": "string", "pattern": "^PRD-[A-Z]+-[0-9]{3}$"},
+    "title": {"type": "string"},
+    "version": {"type": ["string", "number"]},
+    "status": {"enum": ["draft", "in-review", "approved", "superseded"]},
+    "tdd_mode": {"enum": ["co-draft", "eng-owned"]},
+    "engineering_lead": {"type": "string"},
+    "co_author": {"type": ["string", "null"]},
+    "code_repos": {"type": ["array", "null"], "items": {"type": "string"}},
+    "golden_path": {"type": "boolean"},
+    "deviations": {"type": ["array", "null"], "items": {"type": "string"}},
+    "p6m": {"type": ["object", "null"]},
+    "approved_on": {"type": ["string", "null"]}
+  }
+}

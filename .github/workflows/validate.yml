@@ -1,0 +1,28 @@
+name: Validate product docs
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - name: Validate all products
+        run: python scripts/pm.py validate
+      - name: Jira plan for changed products (dry run, no credentials)
+        if: github.event_name == 'pull_request'
+        run: |
+          changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- 'domains/*/products/*/*' \
+                    | cut -d/ -f1-4 | sort -u)
+          {
+            echo "## Jira plan"
+            for d in $changed; do
+              [ -f "$d/prd.md" ] || continue
+              echo "### $d"; echo '```'; python scripts/pm.py plan "$d"; echo '```'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"

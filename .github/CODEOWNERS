@@ -1,0 +1,7 @@
+# Three roles: product owner (writes), product leader (approves), product VP (views).
+# The product leader owns their domain folder, so their PR approval is required to merge
+# any PRD or TDD change — that approval is the approval of record.
+/templates/     @your-github-handle
+/standards/     @your-github-handle
+/scripts/       @your-github-handle
+/domains/sq/    @sq-product-leader-handle
