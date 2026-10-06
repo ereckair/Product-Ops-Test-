@@ -13,3 +13,10 @@ jira:
   story_points_field: customfield_10063   # Story Points
   epic_link_mode: epic_link # XW is a classic (company-managed) project
   epic_link_field: customfield_10014      # Epic Link
+  repo_url: https://github.com/ereckair/Product-Ops-Test-/blob/main
+  fields:
+    epic:
+      - {name: Finance ID, id: customfield_10454, source: frontmatter.jira_extra.finance_id, type: text}
+      - {name: V2030 Capabilities, id: customfield_11977, source: frontmatter.jira_extra.v2030_capabilities, type: multiselect}
+    story:
+      - {name: Acceptance Criteria, id: customfield_10091, source: req.acceptance_criteria, type: text}
