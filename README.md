@@ -54,6 +54,37 @@ The sync only sets **summary, description, story points, and parent**. Status, a
 and comments belong to Jira and are never touched. Items removed from docs are reported as
 `orphan` and must be closed manually — the sync never deletes.
 
+## Jira mapping
+
+| Docs | Jira |
+|------|------|
+| PRD | One epic |
+| `REQ-NNN` | Story under the epic (with story points) |
+| `AREA-NN` capability area | Label on each story, e.g. `area-request-management` |
+| `TASK-NNN` (TDD) | Subtask under its story |
+
+## Extra Jira fields
+
+Spaces often have custom fields (Acceptance Criteria, capability pickers, finance IDs). Map them in
+`domain.yaml`; the agent can discover field IDs for you (jira-sync skill, setup step 3).
+
+```yaml
+jira:
+  repo_url: https://github.com/<you>/<repo>/blob/main   # epics link back to the PRD
+  fields:
+    epic:
+      - {name: Acceptance Criteria, id: customfield_XXXXX, source: prd.success_metrics, type: text}
+      - {name: V2030 Capabilities,  id: customfield_XXXXX, source: frontmatter.jira_extra.v2030_capabilities, type: multiselect}
+      - {name: Finance ID,          id: customfield_XXXXX, source: frontmatter.jira_extra.finance_id, type: text}
+    story:
+      - {name: Acceptance Criteria, id: customfield_XXXXX, source: req.acceptance_criteria, type: text}
+```
+
+Sources: `prd.tldr`, `prd.problem`, `prd.business_goals`, `prd.non_goals`, `prd.success_metrics`,
+`req.acceptance_criteria`, `req.persona`, `req.priority`, `frontmatter.<path>`. Types: `text`, `select`,
+`multiselect`, `number`. Blank values are skipped, so a field is only written when the docs have a value.
+The epic description always carries summary, problem, business goals, and non-goals (anything not mapped to its own field).
+
 ## Two ways to write to Jira
 
 | Mode | Auth | Best for |

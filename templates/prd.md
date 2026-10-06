@@ -21,6 +21,9 @@ kpis: []                           # from The Ten: otif | order_to_delivery_lead
                                    # contacts_per_delivered_unit | brand_health | vitality |
                                    # workforce_stability | growth_to_plan | margin_to_plan
 # ── Approval ───────────────────────────────────────────────
+jira_extra: {}                     # values for extra Jira fields mapped in domain.yaml, e.g.
+                                   #   finance_id: FIN-123
+                                   #   v2030_capabilities: [Quality Intelligence]
 approved_by: []                    # product leader, set in the approval PR
 approved_on:
 ---
@@ -62,11 +65,12 @@ approved_on:
 
 ## 5. Requirements
 
-<!-- AGENT: Each capability area becomes a Jira EPIC. Each REQ becomes a Jira STORY.
+<!-- AGENT: This whole PRD becomes ONE Jira EPIC. Each REQ becomes a STORY under it.
+     Capability areas (AREA-NN) group requirements and become a label on each story.
      Acceptance criteria become the story's AC verbatim. Priority uses MoSCoW.
      Story points are NOT set here — they are computed after TDD approval. -->
 
-### EPIC-01: <Capability area>
+### AREA-01: <Capability area>
 
 #### REQ-001 · <Short requirement name>
 - **Priority:** Must | Should | Could
@@ -84,7 +88,7 @@ approved_on:
 - **Acceptance criteria:**
   -
 
-### EPIC-02: <Capability area>
+### AREA-02: <Capability area>
 
 #### REQ-003 · <Short requirement name>
 - **Priority:**
@@ -130,7 +134,7 @@ approved_on:
 
 ## 9. Release Plan
 
-| Phase | Scope (EPIC / REQ) | Target date | Exit criteria |
+| Phase | Scope (AREA / REQ) | Target date | Exit criteria |
 |-------|--------------------|-------------|---------------|
 | MVP | | | |
 | Phase 2 | | | |

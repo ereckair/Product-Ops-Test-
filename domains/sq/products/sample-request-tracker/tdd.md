@@ -30,7 +30,7 @@ approved_on:
 
 <!-- Do not restate the PRD. 3–5 lines: what is being built and why, link to PRD. -->
 - **PRD:** [PRD-<DOMAIN>-<NNN>](./prd.md)
-- **Scope of this design:** EPIC-01, EPIC-02 (list)
+- **Scope of this design:** AREA-01, AREA-02 (list of capability areas)
 - **Out of scope:** <carried from PRD non-goals + technical exclusions>
 
 ## 2. Golden Path Conformance  `[PM]` `[ENG]`
@@ -116,11 +116,11 @@ EntityName
 
 | Task | Parent REQ | Type | Description | Definition of done |
 |------|-----------|------|-------------|--------------------|
-| TASK-001 | REQ-001 | contract | Define request.create procedure and zod schemas | Contract merged, types compile |
-| TASK-002 | REQ-001 | backend | Implement request.create service + Drizzle table | Unit tests pass with fakes |
-| TASK-003 | REQ-001 | frontend | Request form MFE page | Form validates per AC |
-| TASK-004 | REQ-002 | frontend | Open requests list with overdue highlight | Sorted by due date |
-| TASK-005 | REQ-003 | backend | Supplier status update with tracking number | Buyer sees update |
+| TASK-001 | REQ-001 | contract | [TEST] Define request.create procedure and zod schemas | Contract merged, types compile |
+| TASK-002 | REQ-001 | backend | [TEST] Implement request.create service + Drizzle table | Unit tests pass with fakes |
+| TASK-003 | REQ-001 | frontend | [TEST] Request form MFE page | Form validates per AC |
+| TASK-004 | REQ-002 | frontend | [TEST] Open requests list with overdue highlight | Sorted by due date |
+| TASK-005 | REQ-003 | backend | [TEST] Supplier status update with tracking number | Buyer sees update |
 
 <!-- Types: frontend | backend | contract | data | infra | security | test | docs.
      Infra and security tasks from §7 and §8 are appended automatically under an "Enablement" story. -->

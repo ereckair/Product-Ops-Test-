@@ -13,13 +13,17 @@ Code lives in separate repos, referenced by `code_repos` in TDD frontmatter.
 
 ## Hard rules
 1. New docs always start as copies of `templates/prd.md` / `templates/tdd.md`. Keep section numbers and headings exactly.
-2. IDs are stable and never reused: `EPIC-NN`, `REQ-NNN`, `TASK-NNN`. Never renumber existing IDs; append new ones.
+2. IDs are stable and never reused: `AREA-NN`, `REQ-NNN`, `TASK-NNN`. Never renumber existing IDs; append new ones.
 3. Never set story points by hand. Fill the sizing factors in TDD §6.1, then run `python scripts/pm.py points <product-dir> --write`.
 4. Never edit `jira.lock.yaml` or the `jira.initiative` frontmatter field.
 5. Do not change `status` to `approved` unless the product owner asks; approval itself is the product leader merging the PR.
 6. PRDs contain no technical design. Architecture, data, API, deployment, security go in the TDD.
 7. In TDDs, sections tagged `[ENG]` are written by the engineering lead. Draft only guiding stubs there unless the engineering lead asks you to write them.
 8. Always run `python scripts/pm.py validate` before proposing a commit and fix every error.
+
+## Jira mapping
+One PRD = one Jira epic. Each `REQ` = a story under that epic (capability `AREA` becomes a story label).
+Each `TASK` in the TDD = a subtask under its story.
 
 ## Skills
 - `.augment/skills/prd-draft` — turn a raw business proposal into a PRD

@@ -1,6 +1,6 @@
 ---
 id: PRD-SQ-001
-title: Sample Request Tracker (example)
+title: "[TEST] Sample Request Tracker (example)"
 version: 0.2
 status: in-review
 domain: sq
@@ -54,9 +54,9 @@ Sample cost approval workflow.
 
 ## 5. Requirements
 
-### EPIC-01: Request management
+### AREA-01: Request management
 
-#### REQ-001 · Create sample request
+#### REQ-001 · [TEST] Create sample request
 - **Priority:** Must
 - **Persona:** Buyer
 - **Story:** As a buyer, I want to create a sample request for an item and supplier, so that the request is tracked from day one.
@@ -64,16 +64,16 @@ Sample cost approval workflow.
   - Given I am a buyer, when I submit item number, supplier, and due date, then a request is created with status "Requested".
   - Given a required field is missing, when I submit, then I see which field is missing.
 
-#### REQ-002 · View open requests
+#### REQ-002 · [TEST] View open requests
 - **Priority:** Must
 - **Persona:** Buyer
 - **Story:** As a buyer, I want to see all my open requests with status and due date, so that I know what to chase.
 - **Acceptance criteria:**
   - Given I have open requests, when I open the tracker, then I see them sorted by due date with overdue ones highlighted.
 
-### EPIC-02: Supplier updates
+### AREA-02: Supplier updates
 
-#### REQ-003 · Supplier updates status
+#### REQ-003 · [TEST] Supplier updates status
 - **Priority:** Should
 - **Persona:** Supplier
 - **Story:** As a supplier, I want to update the status of a request, so that the buyer knows when the sample ships.
@@ -113,9 +113,9 @@ request_created, status_changed.
 
 ## 9. Release Plan
 
-| Phase | Scope (EPIC / REQ) | Target date | Exit criteria |
+| Phase | Scope (AREA / REQ) | Target date | Exit criteria |
 |-------|--------------------|-------------|---------------|
-| MVP | EPIC-01 | Q1 | Buyers using it |
+| MVP | AREA-01 | Q1 | Buyers using it |
 
 ## 10. Risks & Open Questions
 

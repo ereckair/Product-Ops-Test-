@@ -7,7 +7,7 @@
   python scripts/pm.py plan <product-dir> [--allow-draft]
   python scripts/pm.py apply <product-dir> [--allow-draft] [--yes]
   python scripts/pm.py plan <product-dir> --json         # for an agent with its own Jira access
-  python scripts/pm.py record <product-dir> EPIC-01=SQ-12 REQ-001=SQ-13 ...
+  python scripts/pm.py record <product-dir> PRD-SQ-001=SQ-12 REQ-001=SQ-13 ...
 
 Jira env vars for apply: JIRA_BASE_URL, JIRA_TOKEN, and either
 JIRA_EMAIL (Cloud, basic auth) or JIRA_AUTH=bearer (Data Center PAT).
@@ -115,12 +115,12 @@ def parse_requirements(body: str) -> list[Epic]:
     cur_req: Req | None = None
     in_ac = False
     for line in body.split("\n"):
-        if m := re.match(r"^### (EPIC-\d+):\s*(.+)$", line):
+        if m := re.match(r"^### (AREA-\d+):\s*(.+)$", line):
             epics.append(Epic(m.group(1), m.group(2).strip()))
             cur_req, in_ac = None, False
         elif m := re.match(r"^#### (REQ-\d+)\s*[·:\-]\s*(.+)$", line):
             if not epics:
-                epics.append(Epic("EPIC-00", "Unassigned"))
+                epics.append(Epic("AREA-00", "Unassigned"))
             cur_req = Req(m.group(1), m.group(2).strip(), epics[-1].id)
             epics[-1].reqs.append(cur_req)
             in_ac = False
@@ -227,7 +227,7 @@ def validate_product(pdir: Path) -> tuple[list[str], list[str]]:
         if s not in titles:
             errs.append(f"PRD missing section: {s}")
     if not p.epics:
-        errs.append("PRD has no EPIC-NN headings under §5")
+        errs.append("PRD has no AREA-NN headings under §5")
     seen = set()
     for e in p.epics:
         if not e.reqs:
@@ -379,6 +379,79 @@ def cmd_points(args) -> int:
 
 
 # ── Jira plan / apply ───────────────────────────────────────────────────────
+def section_text(body: str, title: str) -> str:
+    body = strip_comments(body)
+    m = re.search(rf"^## (?:\d+\.\s*)?{re.escape(title)}\s*\n(.*?)(?=^## |\Z)", body, re.M | re.S)
+    return m.group(1).strip() if m else ""
+
+
+def table_bullets(body: str, heading_prefix: str, fmt) -> list[str]:
+    out = []
+    for row in find_table(strip_comments(body), heading_prefix)[1]:
+        if all(is_blank(v) for v in row.values()):
+            continue
+        line = fmt(row)
+        if line and not PLACEHOLDER.search(line):
+            out.append(line)
+    return out
+
+
+def prd_sources(p: "Product") -> dict:
+    b = p.prd_body
+    goals = table_bullets(b, "3.1", lambda r: f"{r.get('Goal', '')} — KPI: {r.get('KPI (The Ten)', '')}; "
+                          f"{r.get('Baseline', '')} → {r.get('Target', '')} by {r.get('By when', '')}")
+    metrics = table_bullets(b, "8. Success", lambda r: f"{r.get('Metric', '')}: {r.get('Definition / how measured', '')} "
+                            f"— target {r.get('Target', '')}")
+    clean = lambda t: "" if PLACEHOLDER.fullmatch(t.strip() or "<x>") else t.strip()
+    return {
+        "prd.tldr": clean(section_text(b, "TL;DR")),
+        "prd.problem": clean(section_text(b, "Problem & Context")),
+        "prd.business_goals": "\n".join(f"* {g}" for g in goals),
+        "prd.non_goals": clean(re.split(r"^### ", section_text(b, "Goals").split("### 3.3 Non-goals")[-1], flags=re.M)[0])
+                          if "### 3.3 Non-goals" in section_text(b, "Goals") else "",
+        "prd.success_metrics": "\n".join(f"* {m}" for m in metrics),
+    }
+
+
+def resolve_source(source: str, fm: dict, prd_src: dict, req: "Req | None" = None):
+    if source.startswith("frontmatter."):
+        v = fm
+        for part in source.split(".")[1:]:
+            v = v.get(part) if isinstance(v, dict) else None
+        return v
+    if source.startswith("req.") and req is not None:
+        return {"req.acceptance_criteria": "\n".join(f"* {a}" for a in req.ac),
+                "req.persona": req.persona, "req.priority": req.priority}.get(source)
+    return prd_src.get(source)
+
+
+def extra_fields(kind: str, cfg: dict, fm: dict, prd_src: dict, req=None) -> list[dict]:
+    out = []
+    for f in (cfg.get("fields") or {}).get(kind) or []:
+        if not f.get("id") or is_blank(f.get("id")):
+            continue
+        v = resolve_source(f.get("source", ""), fm, prd_src, req)
+        if v is None or v == [] or (isinstance(v, str) and is_blank(v)):
+            continue
+        out.append({"id": f["id"], "name": f.get("name", f["id"]), "type": f.get("type", "text"), "value": v})
+    return out
+
+
+def jira_value(f: dict):
+    t, v = f["type"], f["value"]
+    if t == "select":
+        return {"value": str(v)}
+    if t == "multiselect":
+        return [{"value": str(x)} for x in (v if isinstance(v, list) else [v])]
+    if t == "number":
+        return float(v)
+    return v if isinstance(v, str) else str(v)
+
+
+def slug_label(name: str) -> str:
+    return "area-" + re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:40]
+
+
 @dataclass
 class Item:
     local_id: str
@@ -388,9 +461,12 @@ class Item:
     parent: str | None
     points: int | None = None
     gated_by: str | None = None   # reason it cannot be synced yet
+    labels: list[str] = field(default_factory=list)  # set on create only
+    extra: list[dict] = field(default_factory=list)   # [{id, name, type, value}] from domain.yaml jira.fields
 
     def digest(self) -> str:
-        raw = json.dumps([self.summary, self.description, self.parent, self.points], ensure_ascii=False)
+        raw = json.dumps([self.summary, self.description, self.parent, self.points,
+                          [(f["id"], f["value"]) for f in self.extra]], ensure_ascii=False)
         return hashlib.sha256(raw.encode()).hexdigest()[:12]
 
 
@@ -416,15 +492,37 @@ def build_items(p: Product, allow_draft: bool) -> list[Item]:
             if pt is not None:
                 pts[row.get("REQ", "").strip()] = pt
 
+    prd_id = fm.get("id")
+    src = prd_sources(p)
+    configured = {f.get("source") for k in ("epic", "story")
+                  for f in ((jcfg.get("fields") or {}).get(k) or []) if f.get("id") and not is_blank(f.get("id"))}
+    repo = (jcfg.get("repo_url") or "").rstrip("/")
+    prd_link = f"{repo}/{p.dir.relative_to(ROOT).as_posix()}/prd.md" if repo else ""
+    parts = []
+    for title, key in [("Summary", "prd.tldr"), ("Problem", "prd.problem"), ("Business goals", "prd.business_goals"),
+                       ("Non-goals", "prd.non_goals"), ("Success metrics", "prd.success_metrics")]:
+        if src.get(key) and key not in configured:
+            parts += [f"h3. {title}", src[key], ""]
+    parts += [f"KPIs (The Ten): {', '.join(fm.get('kpis') or []) or '—'}",
+              f"Product owner: {fm.get('product_owner', '')} · Product leader: {fm.get('product_leader', '')}",
+              f"PRD: {prd_link or prd_id}"]
+    epic_labels = [f"domain-{fm.get('domain', '')}", f"vs-{fm.get('value_stream', '')}"]
+    items.append(Item(prd_id, "epic", fm.get("title", ""), "\n".join(parts), init_parent, gated_by=prd_gate,
+                      labels=[l for l in epic_labels if not l.endswith("-")],
+                      extra=extra_fields("epic", jcfg, fm, src)))
     for e in p.epics:
-        items.append(Item(e.id, "epic", e.name, f"Source: {fm.get('id')} / {e.id}", init_parent, gated_by=prd_gate))
         for r in e.reqs:
-            desc = [r.story, "", "h3. Acceptance criteria"] + [f"* {a}" for a in r.ac]
+            desc = [r.story]
+            if "req.acceptance_criteria" not in configured:
+                desc += ["", "h3. Acceptance criteria"] + [f"* {a}" for a in r.ac]
             if r.notes and not is_blank(r.notes):
                 desc += ["", "h3. Notes", r.notes]
-            desc += ["", f"Priority: {r.priority} · Persona: {r.persona}", f"Source: {fm.get('id')} / {r.id}"]
-            items.append(Item(r.id, "story", f"{r.name}", "\n".join(desc), e.id,
-                              points=pts.get(r.id) if tdd_ok else None, gated_by=prd_gate))
+            desc += ["", f"Capability area: {e.id} {e.name}", f"Priority: {r.priority} · Persona: {r.persona}",
+                     f"Source: {prd_id} / {r.id}"]
+            items.append(Item(r.id, "story", r.name, "\n".join(desc), prd_id,
+                              points=pts.get(r.id) if tdd_ok else None, gated_by=prd_gate,
+                              labels=[slug_label(e.name)],
+                              extra=extra_fields("story", jcfg, fm, src, r)))
 
     if p.tdd_body:
         for row in find_table(strip_comments(p.tdd_body), "6.2")[1]:
@@ -523,6 +621,10 @@ def plan_json(p: Product, plan) -> dict:
         if it.parent:
             op["parent_local_id"] = it.parent
             op["parent_key"] = keys.get(it.parent)  # null until the parent is created and recorded
+        if it.labels and action == "create":
+            op["labels"] = it.labels
+        if it.extra:
+            op["fields"] = [{"id": x["id"], "name": x["name"], "type": x["type"], "value": jira_value(x)} for x in it.extra]
         if it.points is not None:
             op["story_points"] = {"field": cfg.get("story_points_field"), "value": it.points}
         ops.append(op)
@@ -530,7 +632,7 @@ def plan_json(p: Product, plan) -> dict:
     return {"product": str(p.dir.relative_to(ROOT)), "prd": p.prd_fm.get("id"),
             "project_key": cfg.get("project_key"), "epic_link_mode": cfg.get("epic_link_mode", "parent"),
             "epic_link_field": cfg.get("epic_link_field"),
-            "owned_fields": ["summary", "description", "story points", "parent"],
+            "owned_fields": ["summary", "description", "story points", "parent", "fields listed per operation"],
             "never_touch": ["status", "assignee", "sprint", "comments", "delete"],
             "operations": ops}
 
@@ -562,11 +664,15 @@ class Jira:
 def fields_for(it: Item, cfg: dict, keys: dict, creating: bool) -> dict:
     """Only fields the docs own: summary, description, points, parent. Never status/assignee/sprint."""
     f = {"summary": it.summary, "description": it.description}
+    for x in it.extra:
+        f[x["id"]] = jira_value(x)
     if it.points is not None and cfg.get("story_points_field"):
         f[cfg["story_points_field"]] = it.points
     if creating:
         f["project"] = {"key": cfg["project_key"]}
         f["issuetype"] = {"name": cfg["issue_types"][it.kind]}
+        if it.labels:
+            f["labels"] = it.labels
         parent_key = keys.get(it.parent) if it.parent else None
         if parent_key:
             if it.kind == "story" and cfg.get("epic_link_mode") == "epic_link":

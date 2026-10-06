@@ -12,7 +12,7 @@ description: Draft a Technical Design Document from a PRD, co-written with the e
 ## Steps
 1. Copy `templates/tdd.md` to `tdd.md` in the product folder. Set `id`, `prd`, owners, `code_repos`.
 2. `[PM]` sections — draft fully from the PRD:
-   - §1 Overview: scope by EPIC, link to PRD. Do not restate the PRD.
+   - §1 Overview: scope by capability AREA, link to PRD. Do not restate the PRD.
    - §2 Golden Path: default all rows to ✅. Mark ❌ only if the PRD makes a deviation unavoidable, with rationale.
    - §6 Work breakdown: one sizing row per REQ; tasks per REQ split by type (contract, backend, frontend, data, test).
    - §7 Deployment (P6M): workloads, frontend mode, networking, secrets — infer from the PRD and golden path; mark guesses with `<confirm>`.

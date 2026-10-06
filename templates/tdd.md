@@ -30,7 +30,7 @@ approved_on:
 
 <!-- Do not restate the PRD. 3–5 lines: what is being built and why, link to PRD. -->
 - **PRD:** [PRD-<DOMAIN>-<NNN>](./prd.md)
-- **Scope of this design:** EPIC-01, EPIC-02 (list)
+- **Scope of this design:** AREA-01, AREA-02 (list of capability areas)
 - **Out of scope:** <carried from PRD non-goals + technical exclusions>
 
 ## 2. Golden Path Conformance  `[PM]` `[ENG]`
